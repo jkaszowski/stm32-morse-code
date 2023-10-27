@@ -118,19 +118,32 @@ char getAscii(char* str){
 			return i + 'a';
 		}
 	}
+	return ' ';
 }
 char human_readable[128];
+char* ptr;
 
-void printAscii(char *stack) {
+void convertWord(char *word) {
   char korektor[] = " ";
   char *schowek;
-  char* ptr = human_readable;
-  schowek = strtok(stack, korektor);
+  schowek = strtok(word, korektor);
   *(ptr++) = getAscii(schowek);
   while ((schowek = strtok(NULL, korektor)) != NULL) {
 	  *(ptr++) = getAscii(schowek);
   }
-  *(ptr++) = 0;
+  *(ptr++) = ' ';
+}
+
+void convertBuffer(char *stack){
+	  char korektor[] = " ";
+	  char *schowek;
+	  ptr = human_readable;
+	  schowek = strtok(stack, korektor);
+	  *(ptr++) = getAscii(schowek);
+	  while ((schowek = strtok(NULL, korektor)) != NULL) {
+		  *(ptr++) = getAscii(schowek);
+	  }
+	  *(ptr++) = 0;
 }
 
 typedef enum {
@@ -219,9 +232,6 @@ int main(void)
 			  }else if((DASH_DURATION_LOW < duration) && (duration < DASH_DURATION_HIGH)){
 				  *(stack_ptr++) = DASH;
 			  }
-			  else if((BETWEENWORDPAUSE_DURATION_LOW < duration) && (duration < BETWEENWORDPAUSE_DURATION_HIGH)){
-			  				  *(stack_ptr++) = SPACE;
-			  			  }
 			  state = MEASURING_LOW;
 			  log_dec("MEASURED_HIGH",duration);
 			  last_timestamp = HAL_GetTick();
@@ -244,6 +254,8 @@ int main(void)
 				  log("Found pause between dot and dash");
 			  }else if((BETWEENWORDPAUSE_DURATION_LOW < duration) &&(duration < BETWEENWORDPAUSE_DURATION_HIGH)){
 				  *(stack_ptr++) = SPACE;
+				  			  				*(stack_ptr++) = 'X';
+				  			  				*(stack_ptr++) = SPACE;
 				  log("Found pause between words");
 			  }else if((MIDWORDPAUSE_DURATION_LOW < duration) &&(duration < MIDWORDPAUSE_DURATION_HIGH)){
 				  *(stack_ptr++) = SPACE;
@@ -258,7 +270,7 @@ int main(void)
 		  log("FINISH");
 		  *(stack_ptr++) = 0;
 //		  log(stack);
-		  printAscii(stack);
+		  convertBuffer(stack);
 		  HAL_Delay(20);
 //		  CDC_Transmit_FS((uint8_t*)human_readable, strlen(human_readable));
 		  log(human_readable);
