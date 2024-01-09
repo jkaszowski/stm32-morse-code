@@ -206,7 +206,12 @@ void run() {
   // CDC_Transmit_FS("\r\n", 2);
   // printAscii(stack);
   uint32_t ref = calibrateReferenceValue();
-  LOG_INFO("Measured " << ref << " to be a reference value");
-  LOG_INFO("Got " << str.len() << " samples");
+  static char buffer[256];
+  snprintf(buffer, 256, "Reference: %d\r\n", ref);
+  log(buffer);
+  while (1) {
     Stream str = getStream(ref + 200);
+    snprintf(buffer, 256, "Got stream with length %d\r\n", str.len());
+    log(buffer);
+  }
 }
