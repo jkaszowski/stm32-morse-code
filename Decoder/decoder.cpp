@@ -209,7 +209,13 @@ void run() {
   static char buffer[256];
   snprintf(buffer, 256, "Reference: %d\r\n", ref);
   log(buffer);
+  uint32_t lastValue = LOW_STATE, currentValue = LOW_STATE;
   while (1) {
+    currentValue = adc_get();
+    if (!(lastValue == LOW_STATE && currentValue == HIGH_STATE)) {
+      lastValue = currentValue;
+      continue;
+    }
     Stream str = getStream(ref + 200);
     snprintf(buffer, 256, "Got stream with length %d\r\n", str.len());
     log(buffer);
