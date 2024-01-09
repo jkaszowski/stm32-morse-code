@@ -72,7 +72,7 @@ uint32_t calibrateReferenceValue() {
   return (measured / calibration_samples);
 }
 
-Stream getStreamAndCalibrate(uint32_t threshold_high) {
+Stream getStream(uint32_t threshold_high) {
   constexpr const uint32_t timeout_ms = 1000;
   static uint8_t buffer[10000];
   Stream stream(buffer, 10000);
@@ -96,6 +96,20 @@ Stream getStreamAndCalibrate(uint32_t threshold_high) {
   return stream;
 }
 
+void calibrateStream(Stream str) {
+  bool isPreviousHigh = false;
+  uint32_t total_length = 0, n = 0;
+  uint32_t sample_length = 0;
+  while (str.is_ok()) {
+    uint8_t sample = str.get_next();
+    if (sample == HIGH_STATE) {
+      sample_length++;
+    }
+    if (isPreviousHigh && sample == LOW_STATE) {
+    }
+    sample == HIGH_STATE ? isPreviousHigh = true : isPreviousHigh = false;
+  }
+}
 // decodes stream to
 void decodeStreamToString(uint8_t *stream, uint16_t length, char *string) {
   TRANSMISSION_STATE state = NORMAL;
@@ -193,6 +207,6 @@ void run() {
   // printAscii(stack);
   uint32_t ref = calibrateReferenceValue();
   LOG_INFO("Measured " << ref << " to be a reference value");
-  Stream str = getStreamAndCalibrate(ref);
   LOG_INFO("Got " << str.len() << " samples");
+    Stream str = getStream(ref + 200);
 }
