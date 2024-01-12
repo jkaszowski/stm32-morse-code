@@ -2,9 +2,12 @@
 \usepackage{graphicx}
 \usepackage[hidelinks]{hyperref}
 \usepackage{listings}
+\usepackage{multicol}
+\usepackage{caption}
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
+\graphicspath{ {img/} }
 
 \usepackage[a4paper, margin={0.7in, 0.7in}]{geometry}
 
@@ -17,6 +20,14 @@
 \fancyfoot[C]{\thetitle}
 \fancyfoot[R]{\thepage}
 \renewcommand{\footrulewidth}{0.5pt}
+
+\newcommand{\image}[3]{
+\begin{figure}[h]
+	\begin{center}
+		\includegraphics[scale=#3]{#2}
+	\end{center}
+  \caption{#1}
+\end{figure}}
 
 \usepackage{tocloft}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
@@ -49,34 +60,83 @@
 		\end{tabular} \\
 		\vspace{5pt}
 		Wrocław 2024 \\
-		
-		
-			
+
 		\end{center}
 		
 	\end{titlepage}	
-
   \newpage
 	\tableofcontents{\thispagestyle{fancyplain}}
+  \newpage
 	
 	\section{Introduction}
 	% Subject of the report, content of the report
+  The purpose of this project was to build a device capable of transmitting text using light. It should provide a Physical Layer for higher level arbitrary protocols.
+  Such a device could be used in a variety of applications, such as remote control of any device that has a serial port.
+  Any encoding could be used. Some of them could involve checksums and retransmission. Our device will however send a message in one direction, so even if the error is caught,
+  there is no means to request a retransmission. Having in mind this assumption, we decided to use a morse code for encoding the information.
+
+  This report is a technical documentation of the project. It describes the initial assumptions, selected solutions and final result.
+  It was developed during Optoelectronics course at Wrocław University of Science and Technology under supervision of dr. Daruisz Wysoczański.
+
 	
 	\section{Theoretical Introduction}
 	% Domain, phenomena, methods, realizations, parameters, equations
+  Since the aim of the project is transmitting information using light, elements capable of transmitting and receiving light are needed
+  They will be core parts of respectively a transmitter and receiver.
+  \subsection{Transceiver}
+  From available sources of light, we have decided to use a standard infrared diode used in any TV remote control. It can generate a light with wavelength of 940nm.
+  Such diodes have many advantages and let us mitigate problems that we could have when using more sophisticated ligth source. One of our alternatives were lasers that
+  can be found in our lab. The provide more directed and more intense light, but require power supply and the modulation of such light would be complex.
+  The another factor for such choice is price and availability. The used infrared led was purchased at local electronic shop and is fairly inexpensive - costs less than 1\$.
+  \begin{multicols}{2}
+    \centering
+    \includegraphics[scale=0.6]{ir_diode.jpg}
+    \captionof{figure}{Infrared LED} \par
+    \includegraphics[scale=0.6]{photodiode.jpg}
+    \captionof{figure}{Photodiode} 
+\end{multicols}
+  
+  \subsection{Receiver}
+  The crucial element of the setup is the sensing element measuring the light sent by transceiver.
+  It should be chosen in such a way to maximise the useful signal and minimise the noise.
+  A most common part used to measure light intensity in a hobbyist projects is a fotoresistor. Such element changes its resistance with the change of light conditions. 
+  It can't be used in our device since it would be too prone to the interferences, as it has a wide sensing specturm.
+  Since we decided to use a standard infrared diode, we chose to use a phototransistor made for the same light 
 	
 	\section{Assumptions}
 	\subsection{Functional Assumptions}
 	% What it does
+  The transmitter should be able to broadcast a message encoded as a morse code. It should take the input data from a serial port that should be easy to connect to a standard PC without specialized converter.
+  The device should take a text message, turn in into a morse code and transmit.
+  The receiver should listen continuously wait for any message to come. When it arrives, it should decode it into a useful form - back into a human readable text. In case a timing error happens, the user should be notified.
+  Both of them should be easy to carry. Moreover they should be powered from a USB port with maximum current of 500mA.
+  The functional requirements can be summarized as follows:
+  \begin{itemize}
+    \item Provide USB interface for sending/receiving data.
+    \item Encode a message with morse code.
+    \item Send and receive morse code.
+    \item Decode morse code into a useful form.
+    \item Detect idle line or incorrect timings.
+    \item Does not need external power supply.
+  \end{itemize}
 	\subsection{Design Assumptions}
 	% Method of implementing functional assumptions
-	
+  We want our design to be easy to make at home. Thus, inexpensive off the shelf components are used.
+  Also, the setup does not have a custom PCB - this makes it easy to reproduce for everyone, even using a breadboard.	
+  The case is optional for the device operation. In our case it will be 3D printed.
+  Our design should meet the following criteria:
+  \begin{itemize}
+    \item Off the shelf components are used.
+    \item The costs should be minimized.
+    \item The source code should be open source.
+    \item The case is 3D printed.
+  \end{itemize}
 	\section{Description of the Hardware Part}
 	% Block diagram + description
 	% Photo of the actual system with reference to the block diagram
 	% Mechanical part
 	% Electrical schematics diagram + description
-	% Key elements - description
+	% Key elements - descripion
 	% PCBs, assembly diagram
 	
 	\section{Description of the Software}
@@ -88,6 +148,8 @@
 	
 	\section{Start-up, Calibration}
 	% First start-up, calibration
+  During the start-up, the calibration procedure is needed. It is impossible to know in what ligh conditions the device will operate, so the reference value of light intensity is not hardcoded.
+  Instead, a short procedure is executed at each startup. It does not take more than 3 seconds which is usually negligeble since the operator won't even have time to open serial connection in this time.
 	
 	\section{Test Measurements}
 	% Measurement conditions
@@ -99,13 +161,20 @@
 	
 	\section{Summary}
 	% Work subject, results achieved, encountered problems, visions for the future
+  As a result, two separate devices were built. Both of them fullfill the initial assumptions.
+  The transceiver gets data from serial port emulated in USB, encodes it as a morse code and transmits.
+  The receiver perfroms calibration, classification of the current state of the line and performs algorithm for decdoing the morse code into the text message. It also detects and notifies user about timing errors.
 	
 	\begin{thebibliography}{9}
 		% Bibliography
 	\end{thebibliography}
 	
+
+  \section*{Appendices}
 	\appendix
-	\section{Appendix}
+	\section{Technical drawing of case}
+	\section{Electrical schematic}
+	\section{Full code listing}
 	% Dimensioned patterns of PCBs
 	% Full listing
 	% Key fragments of catalog notes
