@@ -74,6 +74,8 @@
   Such a device could be used in a variety of applications, such as remote control of any device that has a serial port.
   Any encoding could be used. Some of them could involve checksums and retransmission. Our device will however send a message in one direction, so even if the error is caught,
   there is no means to request a retransmission. Having in mind this assumption, we decided to use a morse code for encoding the information.
+  This report elucidates a project that employs Morse code for intercommunication between two Printed Circuit Board (PCB) assemblies. The communication is facilitated by a light-emitting 
+  diode (LED) transmitter and an LED receiver. The messages, originating from a computer terminal, are transmuted into Morse code, transmitted, received, and then demodulated back into alphanumeric characters for display.
 
   This report is a technical documentation of the project. It describes the initial assumptions, selected solutions and final result.
   It was developed during Optoelectronics course at Wrocław University of Science and Technology under supervision of dr. Daruisz Wysoczański.
@@ -81,6 +83,9 @@
 	
 	\section{Theoretical Introduction}
 	% Domain, phenomena, methods, realizations, parameters, equations
+ The project is situated within the realm of digital electronics and optical communication. It leverages the principle of optical transmission and reception of signals. The Morse code, a method of encoding text characters as standardized 
+  sequences of two different signal durations, is used as the medium of communication. The hardware components employed include LEDs and STM32 microprocessors. The system's performance is contingent on parameters such as signal strength, 
+  transmission distance, and ambient light interference. The mathematical model for the Morse code encoding and decoding process will be presented.
   Since the aim of the project is transmitting information using light, elements capable of transmitting and receiving light are needed
   They will be core parts of respectively a transmitter and receiver.
   \subsection{Transceiver}
@@ -106,6 +111,8 @@
 	\section{Assumptions}
 	\subsection{Functional Assumptions}
 	% What it does
+  The system is architected to transmit alphanumeric messages from one terminal to another using Morse code as the communication protocol. The user inputs a message into the transmitting terminal. This message is then encoded into Morse code and 
+  transmitted via the LED transmitter. The LED receiver picks up the transmitted Morse code signal, decodes it back into alphanumeric characters, and displays it on the terminal screen.
   The transmitter should be able to broadcast a message encoded as a morse code. It should take the input data from a serial port that should be easy to connect to a standard PC without specialized converter.
   The device should take a text message, turn in into a morse code and transmit.
   The receiver should listen continuously wait for any message to come. When it arrives, it should decode it into a useful form - back into a human readable text. In case a timing error happens, the user should be notified.
@@ -121,6 +128,8 @@
   \end{itemize}
 	\subsection{Design Assumptions}
 	% Method of implementing functional assumptions
+  The system is implemented on the Arduino Black Pill platform, powered by STM32 microprocessors. The firmware, written in C, provides low-level control over the hardware peripherals and system resources. The design assumes a certain level of 
+  proficiency in digital electronics, embedded systems, and C programming. The firmware handles tasks such as Morse code encoding/decoding, signal transmission/reception, and user interface management.
   We want our design to be easy to make at home. Thus, inexpensive off the shelf components are used.
   Also, the setup does not have a custom PCB - this makes it easy to reproduce for everyone, even using a breadboard.	
   The case is optional for the device operation. In our case it will be 3D printed.
