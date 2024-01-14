@@ -177,11 +177,85 @@
 	% PCBs, assembly diagram
 	
 	\section{Description of the Software}
+	\section{Receiver software}
 	% Main algorithm - diagram + description
 	% Description of key functions (code examples)
 	% Transmission protocols, key variables and parameters, etc.
 	% Program listing in the appendices (with heading with the information about code type, hardware, author, version, date, etc.)
 	% GUI - description
+  The software on the microcontroller is responsible for following tasks:
+  \begin{enumerate}
+    \item Measure current signal level using builtin ADC.
+    \item Quantize an analog signal into binary voltage levels.
+    \item Continuously run converting algorightm.
+    \item Recognize errors.
+  \end{enumerate}
+
+  \subsection{MCU selection}
+  The selected MCU is STM32F411 that can be found onboard breakout module Blackpill. It contains USB periperial enabling us to communicate with serial emulators without a 
+  dedicated USB to UART converter. It also has a builtin ADC with configurable resolution (in our case it is set to 12 bits) that runs in a continuous mod) that runs in a continuous mode.
+  Additionally, it is equipped with a Floating Point Unint which significantly increases performance while performing math operations.
+  The alternative for STM microcontrollers could be Arduino. It is also used for simliar projects, however it comes with much lower capabilites at the same price - there is no builtin serial to USB converter.
+  Moreover, the debugging is supported only on STM, which proved crucial during implementation.
+
+  \subsection{Toolchain}
+  The STM32 can be programmed using both C and C++. The ARM company provides fork of gcc for the Cortex M4 cores that are used in the Blackpill, which use C++ 17 standard.
+  We have decided to use STM32CubeIDE. It is an Eclipse based IDE that comes with proper compiler and visual configurator of the peripherals and clock. 
+
+
+  With the complexity of an Cortex M4 core, the manual configuration of every peripheral and clock using registers is pretty tedious and error prone. In order to write a portable
+  code, the Hardware Abstraction Layer libraries from the manufacturer were used. They significantly speed up the process of writing hardware drivers and lets us focus
+  on the algorithm and achieving requirements. Moreover, the graphical tool lets us generate appropriate code for setting proper settings of peripherals and clocks.
+  A very useful feature of all arm microcontrollers is SysTick interrupt \cite{stm32reference}. It is called each millisecond and increments a time variable.
+  It enables us to measure time easily, without setting up a dedicated timer.
+
+  \subsection{Analog to Digital Conversion}
+  The selected microcontroller has a powerful successive approximation analog-to-digital converter onboard, capable of achieving 12 bits resolution.
+  It can run in a single or continuous mode and optionally generate a DMA request to offload main CPU.
+
+
+  In our case we use a single measurement mode. It means that each time that we want to get the value of analog voltage in digital form, we have to request it and wait for the event.
+  It is suitable in our case because of low timing requirements. Our algorithm should work in such a way that a human operator could see the transmission and understand it.
+  The timings of the ADC converter are shown below:
+  
+  \image{ADC timing diagram.}{adc_internals.png}{0.4}
+  By setting the SWSTART bit, we can trigger a start a conversion process. Once it finishes, the End Of Conversion (EOC) bit is set.
+  This process takes usually 15 clock cycles of ADC, which in our case is a few MHz.
+
+  \subsection{Converting algorithm}
+  The converting algorithm uses a preconfigured timing constraints that include times of: dash, dot, space between two signs, space between two letters, space between two words, timeout.
+  \vspace{10pt}
+
+  The main flow of the algorithm consists of following steps:
+  \begin{enumerate}
+    \item Calibrate reference value.
+    \item Wait for start of transmission.
+    \item Get chain of dash, dot and space.
+    \item Analyze the chain and present human readable form.
+  \end{enumerate}
+  The schematic of the algorithm looks as follows:
+  \image{Algorithm of the receiver.}{algorithm_receiver.png}{0.4}
+
+  At the beginning, the code performs a calibration. It should establish a reference value of an environmental noise.
+  When finished, the algorithm enters idle state. Here it waits for a transmission to start. It continuously measures the input value and waits for the high state.
+
+  Once the transmission has started, it can measure the length of the high state. Next step is to compare measured value to predefined one and classify signal as a dash, dot or timing error.
+  Following the high state, the low state is measured. If it is too long, the timeout is detected. The user is notified of an error and the algorithm
+  returns to the idle state.
+
+  The other possiblity is that the low state is measured to be a pause between signs, letters or words. If, it is noted as such and the code goes back to measuring high state to get the next sign.
+  The listing of a full code can be found at the end of this report.
+
+  \subsection{Error detection}
+  The first method error detection is performed by comparing measured times to the expected values.
+  The second method is analysis of the chain of dots and dashes. If it happens that the combination does not match any letter in the standard, a question mark is inserted.
+  \begin{figure}
+  \begin{lstlisting}[autogobble,style=CStyle]
+  #include <iostream>
+  std::array<int> ok;
+  \end{lstlisting}
+    \caption{Code responsible for morse code decoding. Unknown sequence return question mark.}
+  \end{figure}
 	
 	\section{Start-up, Calibration}
 	% First start-up, calibration
@@ -204,6 +278,7 @@
 	
 	\begin{thebibliography}{9}
 		% Bibliography
+    \bibitem{stm32reference} STM32F412 Reference Manual - RM0402 (2020), \emph{ST Microelectronics}
 	\end{thebibliography}
 	
 
