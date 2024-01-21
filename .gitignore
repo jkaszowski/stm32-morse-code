@@ -4,3 +4,8 @@ Release/*
 
 # IDE settings
 .settings/*
+
+# Report build artifacts
+report/document.*
+!report/document.tex
+!report/document.pdf
