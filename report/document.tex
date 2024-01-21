@@ -6,6 +6,7 @@
 \usepackage{caption}
 \usepackage{listings,lstautogobble}
 \usepackage{xcolor}
+\usepackage[toc,page]{appendix}
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
@@ -22,6 +23,11 @@
 \fancyfoot[C]{\thetitle}
 \fancyfoot[R]{\thepage}
 \renewcommand{\footrulewidth}{0.5pt}
+\newcommand{\appendixCodeRef}
+{
+Appendix \ref{appendix:code}
+}
+\captionsetup{justification=raggedleft,font=small, labelfont=bf}
 
 \definecolor{codegreen}{rgb}{0,0.6,0}
 \definecolor{codegray}{rgb}{0.5,0.5,0.5}
@@ -60,6 +66,8 @@
 \usepackage{tocloft}
 \renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
 
+\usepackage{enumitem}
+
 \begin{document}
 	\begin{titlepage}
 		\begin{center}
@@ -76,14 +84,14 @@
 		\Large Optoelectronics - project \\
 		\vspace{20pt}
 		\normalsize
-		Group Number: \\
+		Group Number: 10\\
 		
 		\begin{tabular}{ |c|c|c| } 
 			\hline
 			Name & Surname & Album number \\ \hline
 			Jakub & Kaszowski & 263544 \\ \hline
-			Mikołaj & Pastucha & \\ \hline
-			Fryderyk & Leszczyński & \\
+			Mikołaj & Pastucha & 264353 \\  \hline
+			Fryderyk & Leszczyński & 263553 \\
 			\hline
 		\end{tabular} \\
 		\vspace{5pt}
@@ -123,12 +131,13 @@
   The another factor for such choice is price and availability. The used infrared led was purchased at local electronic shop and is fairly inexpensive - costs less than 1\$.
   \begin{multicols}{2}
     \centering
-    \includegraphics[scale=0.6]{ir_diode.jpg}
-    \captionof{figure}{Infrared LED} \par
     \includegraphics[scale=0.6]{photodiode.jpg}
+    \captionof{figure}{Infrared LED} \par
+    \includegraphics[scale=0.6]{ir_diode.jpg}
     \captionof{figure}{Photodiode} 
-\end{multicols}
+  \end{multicols}
   
+  \newpage
   \subsection{Receiver}
   The crucial element of the setup is the sensing element measuring the light sent by transceiver.
   It should be chosen in such a way to maximise the useful signal and minimise the noise.
@@ -169,6 +178,29 @@
     \item The case is 3D printed.
   \end{itemize}
 	\section{Description of the Hardware Part}
+  This section presents how the physical device was built.
+  \subsection{Case}
+  The cover part was designed in Autodesk Inventor. It's two identical boxes with 4 square cubes in which there are six-sided holes for metal nuts of size M3. 
+  These nuts are meant to mount the pcb to the case. Thanks to this, our two devices will be on the same height and we prevent any unwanted
+  movements. In each box, there are three holes - two for our transmitter/receiver diode (with separate indicator). The third one is for USB type-C cable to get 
+  power and signal from the computer. It's closed by slide-in plate. The box was printed with SLA, using 3D printer avaialbe at the robotics class.
+  \image{The case rendered in Autodesk Inventor. Most importants parts are shown.}{box.png}{0.4}
+  \subsection{Motherboard}
+  There are two versions of motherboard: one for transmitter and one for receiver.
+
+
+\image{Transmitter motherboard.}{transmitter_overview.png}{0.3}
+\image{Receiver motherboard.}{receiver_overview.png}{0.3}
+The main componenet of each motherboard are:
+\begin{itemize}
+  \item Microcontroller with power section and USB capable of connection with PC.
+  \item Diode or photodiode for 940nm wavelength.
+  \item LED indicator.
+\end{itemize}
+The motherboards are not the same. The receiver has much more sophisticated MCU, capable of live debugging.
+It's not a necessity but significantly speeds up process of fixing complex algorithms, which was very useful during 
+tests of our project. However, right now as the converting algorithm is implemented, it could be easily ported to Arduino platform that does not have debugging capabilities.
+Full schematic is available in appendix.
 	% Block diagram + description
 	% Photo of the actual system with reference to the block diagram
 	% Mechanical part
@@ -176,7 +208,6 @@
 	% Key elements - descripion
 	% PCBs, assembly diagram
 	
-	\section{Description of the Software}
 	\section{Receiver software}
 	% Main algorithm - diagram + description
 	% Description of key functions (code examples)
@@ -221,6 +252,8 @@
   \image{ADC timing diagram.}{adc_internals.png}{0.4}
   By setting the SWSTART bit, we can trigger a start a conversion process. Once it finishes, the End Of Conversion (EOC) bit is set.
   This process takes usually 15 clock cycles of ADC, which in our case is a few MHz.
+  Thanks to such a speed of the conversion, we are able to probe the channel with frequency well above the frequency of changes of the signal during normal
+  operation. Thanks to that, the shannon-nyquist theorem is not violated in our case.
 
   \subsection{Converting algorithm}
   The converting algorithm uses a preconfigured timing constraints that include times of: dash, dot, space between two signs, space between two letters, space between two words, timeout.
@@ -235,6 +268,7 @@
   \end{enumerate}
   The schematic of the algorithm looks as follows:
   \image{Algorithm of the receiver.}{algorithm_receiver.png}{0.4}
+  The full algorithm is available in \appendixCodeRef.
 
   At the beginning, the code performs a calibration. It should establish a reference value of an environmental noise.
   When finished, the algorithm enters idle state. Here it waits for a transmission to start. It continuously measures the input value and waits for the high state.
@@ -249,18 +283,35 @@
   \subsection{Error detection}
   The first method error detection is performed by comparing measured times to the expected values.
   The second method is analysis of the chain of dots and dashes. If it happens that the combination does not match any letter in the standard, a question mark is inserted.
-  \begin{figure}
+  \begin{figure}[h]
   \begin{lstlisting}[autogobble,style=CStyle]
-  #include <iostream>
-  std::array<int> ok;
+  char getAscii(char *str) {
+    for (int i = 0; i < 26; i++) {
+      if (strcmp(str, morseCode[i]) == 0) {
+        return i + 'a';
+      }
+    }
+    return '?';
+  }
   \end{lstlisting}
     \caption{Code responsible for morse code decoding. Unknown sequence return question mark.}
   \end{figure}
 	
+	\section{Transceiver software}
+  The part of software that sends the data is much simpler than the software that receives the data.
+  The tasks of the software is to get the data that user wants to send in a form of text, convert the text into a morsed code 
+  and generate an appropriate light using connected IR diode. 
+  The algorithm itself is much simpler than in the case of receiver. The code waits for data available in serial port buffer.
+  When its available, it gets converted by using each character in the buffer as a key to a lookup table.
+  The decoded code is immediately transmitted using predefined timing constraints.
+
 	\section{Start-up, Calibration}
 	% First start-up, calibration
+  \subsection{Receiver}
   During the start-up, the calibration procedure is needed. It is impossible to know in what ligh conditions the device will operate, so the reference value of light intensity is not hardcoded.
   Instead, a short procedure is executed at each startup. It does not take more than 3 seconds which is usually negligeble since the operator won't even have time to open serial connection in this time.
+  \subsection{Transmitter}
+  The calibration of transmitter is not needed. It does not sample any data thus the reference value is not needed.
 	
 	\section{Test Measurements}
 	% Measurement conditions
@@ -269,6 +320,68 @@
 	
 	\section{User Manual}
 	% Independent part, no reference to other projects of the report, possible repetition of figures, etc. Independent numbering of figures, tables, equations
+  \textbf{Step 1:} Powering On the Devices
+
+  \begin{enumerate}[label=\alph*).]
+    \item Transmitter (Sender):
+
+Start the Arduino with the transmitter code, and optionally connect to the first PC.
+Ensure that the LED on the transmitter is blinking, indicating readiness for transmission.
+
+\item Receiver (Recipient):
+
+Power on the Blackpill with the receiver code and connect to the second PC.
+Ensure that the receiver is ready (e.g., an LED indicating readiness to receive signals).
+  \end{enumerate}
+
+
+\noindent\textbf{Step 2:} Entering Messages
+\begin{enumerate}
+  \item 1.Transmitter (Sender):
+
+  Enter the message in a natural way using a keyboard or another input device.
+
+\item Transmitter (Sender - Continued):
+
+Press the button to send the message.
+\end{enumerate}
+
+
+\noindent\textbf{Step 3:} Receiving and Displaying Messages
+\begin{enumerate}
+  \item Receiver (Recipient):
+
+Point the receiver towards the transmitter.
+Observe the LED on the receiver, which should be blinking or lit, indicating the reception of signals.
+
+\item Receiver (Recipient - Continued):
+
+Wait for the completion of the transmission.
+View the received messages, which are displayed on the computer.
+
+\end{enumerate}
+
+
+\noindent\textbf{Step 4:} Powering Off the Device
+\begin{enumerate}
+  \item Transmitter (Sender):
+
+Finish using the device by turning off the transmitter.
+
+\item Receiver (Recipient):
+Finish using the device by turning off the receiver.
+
+\end{enumerate}
+\textbf{Tips and Notes:}
+\begin{itemize}
+  \item Distance: Maintain a moderate distance between the transmitter and receiver for effective transmission.
+
+  \item Ambient Light: Avoid strong ambient light that may interfere with the transmission.
+
+  \item Readiness to Receive: Ensure the receiver is ready to receive before starting the transmission.
+
+  \item Safety: Avoid direct exposure to LED lights, especially with strong light sources.
+\end{itemize}
 	
 	\section{Summary}
 	% Work subject, results achieved, encountered problems, visions for the future
@@ -287,9 +400,21 @@
 	\section{Technical drawing of case}
 	\section{Electrical schematic}
 	\section{Full code listing}
+  \subsection{STM32}
+  \label{appendix:code}
+  \lstinputlisting[style=CStyle,lastline=284]{../Core/Src/main.c}
+  \newpage
+  \subsection{Arduino}
+  \lstinputlisting[style=CStyle,lastline=284]{../arduino.ino}
+  % \lstinputlisting[style=CStyle,lastline=284]{../}
 	% Dimensioned patterns of PCBs
 	% Full listing
 	% Key fragments of catalog notes
 	% Custom drawings
 	
 \end{document}
+%TODO:
+% Conver page
+%
+%
+%
