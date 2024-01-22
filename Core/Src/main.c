@@ -1,20 +1,10 @@
 /* USER CODE BEGIN Header */
-/**
- ******************************************************************************
- * @file           : main.c
- * @brief          : Main program body
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
+// ############################################################################
+//   Project: Optical Transmission of Text
+//   Module:  Receiver
+//   Author:  Jakub Kaszowski
+//   Date:    09.01.2024
+// ############################################################################
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
@@ -75,6 +65,7 @@ const char *morseCode[] = {
 ADC_HandleTypeDef hadc1;
 
 /* USER CODE BEGIN PV */
+// Data used by USB driver
 extern int usb_rx_flag;
 extern char usb_rx_buffer[];
 
@@ -90,6 +81,8 @@ static void MX_ADC1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// Measure current ADC value in range 0-4096
 int getADCvalue() {
   int PomiarADC;
   if (HAL_ADC_PollForConversion(&hadc1, 10) == HAL_OK) {
@@ -100,6 +93,7 @@ int getADCvalue() {
   return 0;
 }
 
+// Send message to the user via USB
 void log(const char *msg) {
   char buffer[256];
   snprintf(buffer, 256, "%s\r\n", msg);
@@ -112,6 +106,7 @@ void log_dec(const char *msg, int val) {
   CDC_Transmit_FS(buffer, strlen(buffer));
 }
 
+// Convert a strign of dashes and dots to letter
 char getAscii(char *str) {
   for (int i = 0; i < 26; i++) {
     if (strcmp(str, morseCode[i]) == 0) {
@@ -120,8 +115,9 @@ char getAscii(char *str) {
   }
   return ' ';
 }
-char human_readable[128];
-char *ptr;
+
+char human_readable[128]; // place to store human readable text after the conversion
+char *ptr; // temporary value for conversion
 
 void convertWord(char *word) {
   char korektor[] = " ";
@@ -146,6 +142,7 @@ void convertBuffer(char *stack) {
   *(ptr++) = 0;
 }
 
+// possible states of main FSM
 typedef enum {
   NORMAL,
   MEASURING_HIGH,
@@ -154,32 +151,42 @@ typedef enum {
   CALIBRATION
 } TRANSMISSION_STATE;
 
+// Helper variables for calibration
 int calibration_counter = 0;
 int calibration_buffer = 0;
 const int calibration_samples = 8;
+
+// Stores calibrated value of reference signal
 int reference_value = 0;
+
+// Stores the threshold over refrence value to classify signal as logic HIGH
 int threshhold = 100;
-#define DOT_DURATION 200
-#define DASH_DURATION 600
-#define PAUSE_DURATION 200
-#define MIDWORDPAUSE_DURATION 600
-#define BETWEENWORDPAUSE_DURATION 2200
-#define ERR 50
-#define ERR_PAUSE 300
-#define PAUSE_DURATION_LOW (PAUSE_DURATION - ERR_PAUSE)
-#define PAUSE_DURATION_HIGH (PAUSE_DURATION + ERR_PAUSE)
-#define DOT_DURATION_LOW (DOT_DURATION - ERR_PAUSE)
-#define DOT_DURATION_HIGH (DOT_DURATION + ERR_PAUSE)
-#define DASH_DURATION_LOW (DASH_DURATION - ERR_PAUSE)
-#define DASH_DURATION_HIGH (DASH_DURATION + ERR_PAUSE)
-#define MIDWORDPAUSE_DURATION_LOW (MIDWORDPAUSE_DURATION - ERR_PAUSE)
-#define MIDWORDPAUSE_DURATION_HIGH (MIDWORDPAUSE_DURATION + ERR_PAUSE)
-#define BETWEENWORDPAUSE_DURATION_LOW (BETWEENWORDPAUSE_DURATION - ERR_PAUSE)
-#define BETWEENWORDPAUSE_DURATION_HIGH (BETWEENWORDPAUSE_DURATION + ERR_PAUSE)
+
+// Timing constraints
+const int DOT_DURATION = 200;
+const int DASH_DURATION = 600;
+const int PAUSE_DURATION = 200;
+const int MIDWORDPAUSE_DURATION = 600;
+const int BETWEENWORDPAUSE_DURATION = 2200;
+const int ERR = 50;
+const int ERR_PAUSE = 300;
+const int PAUSE_DURATION_LOW = (PAUSE_DURATION - ERR_PAUSE);
+const int PAUSE_DURATION_HIGH = (PAUSE_DURATION + ERR_PAUSE);
+const int DOT_DURATION_LOW = (DOT_DURATION - ERR_PAUSE);
+const int DOT_DURATION_HIGH = (DOT_DURATION + ERR_PAUSE);
+const int DASH_DURATION_LOW = (DASH_DURATION - ERR_PAUSE);
+const int DASH_DURATION_HIGH = (DASH_DURATION + ERR_PAUSE);
+const int MIDWORDPAUSE_DURATION_LOW = (MIDWORDPAUSE_DURATION - ERR_PAUSE);
+const int MIDWORDPAUSE_DURATION_HIGH = (MIDWORDPAUSE_DURATION + ERR_PAUSE);
+const int BETWEENWORDPAUSE_DURATION_LOW = (BETWEENWORDPAUSE_DURATION - ERR_PAUSE);
+const int BETWEENWORDPAUSE_DURATION_HIGH = (BETWEENWORDPAUSE_DURATION + ERR_PAUSE);
+
 #define DASH '-'
 #define DOT '.'
 #define SPACE ' '
-static char stack[128];
+
+// Space for stroing dashes and dots
+static char stack[512];
 char *stack_ptr = stack;
 
 /* USER CODE END 0 */
@@ -217,11 +224,8 @@ int main(void) {
         last_timestamp = HAL_GetTick();
         state = MEASURING_HIGH;
         stack_ptr = stack;
-        log("NORMAL -> MEASURING_HIGH");
-      } else {
-        //			  log_dec("NORMAL", measured);
-      }
-      break;
+        log("Transition: NORMAL -> MEASURING_HIGH");
+      }      break;
     case MEASURING_HIGH:
       if (getADCvalue() < reference_value + threshhold) {
         duration = HAL_GetTick() - last_timestamp;
@@ -232,17 +236,15 @@ int main(void) {
           *(stack_ptr++) = DASH;
         }
         state = MEASURING_LOW;
-        log_dec("MEASURED_HIGH", duration);
+        log_dec("Measured high state ", duration);
         last_timestamp = HAL_GetTick();
-      } else {
-        //			  log("MEASURING_HIGH");
       }
       break;
     case MEASURING_LOW:
       duration = HAL_GetTick() - last_timestamp;
 
       if (duration > 2 * BETWEENWORDPAUSE_DURATION_HIGH) {
-        log("Timeout, going to finish");
+        log("Timeout");
         state = FINISH;
       }
 
@@ -269,13 +271,9 @@ int main(void) {
       }
       break;
     case FINISH:
-      log("FINISH");
       *(stack_ptr++) = 0;
-      //		  log(stack);
       convertBuffer(stack);
       HAL_Delay(20);
-      //		  CDC_Transmit_FS((uint8_t*)human_readable,
-      // strlen(human_readable));
       log(human_readable);
       state = NORMAL;
       break;
@@ -288,7 +286,7 @@ int main(void) {
       } else {
         reference_value = calibration_buffer / calibration_counter;
         state = NORMAL;
-        log_dec("CALIBRATION -> NORMAL", reference_value);
+        log_dec("Transition: CALIBRATION -> NORMAL", reference_value);
       }
       break;
     }
