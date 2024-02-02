@@ -1,5 +1,16 @@
-# STM32 morse code analyzer
-This project contains software for STM32 based morse code receiver, done as part of optoelectronics project at PWr.
+# Optical Transmission Of Text
+The purpose of this project was to build a device capable of transmitting text using light.
+It consists of two modules:
+- Transmitter
+- Receiver
 
-In order to receive morse code sent by another board, an opto transistor is connected into ADC input of BlackPill.
-The algorithm samples the input in real time, decodes the received signal in morse code form into human readable text.
+![Setup overview](report/img/both.png)
+
+
+The selected encoding for the transmission is Morse Code.
+The transmitter encodes the message using Morse Code and emits correspoding light signals using an IR diode.
+The receiver has a photodiode working with the same wavelength and an algorithm of decoding, based on
+predefined timing constraints defining parameters of Morse Code.
+
+The transmitter is based on Arduino Nano.
+The receiver is based on STM32 BlackPill.
