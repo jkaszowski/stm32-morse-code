@@ -1,3 +1,11 @@
+// ############################################################################
+//   Project: Optical Transmission of Text
+//   Module:  Transmitter
+//   Author:  Mikołaj Pastucha
+//   Date:    25.11.2023
+//   MCU:     Arduino Nano
+// ############################################################################
+
 // Define the mapping between the alphabet and Morse code symbols
 const char* morseCode[] = {
   ".-",   // A
@@ -42,30 +50,6 @@ void setup() {
   Serial.begin(9600);
    pinMode(ledPin, OUTPUT);
   pinMode(buttonPin, INPUT); // Set the button pin as input
-
-  // Calibration phase
-  Serial.println("Calibration in progress...");
-  delay(1000); // Give some time to open the serial monitor
-
-  unsigned long lastButtonPressTime = millis(); // Record the time of the last button press
-  if (digitalRead(buttonPin) == HIGH) {
-      // If the button is pressed, send a high signal
-      digitalWrite(ledPin, HIGH);
-      lastButtonPressTime = millis(); // Update the time of the last button press
-    } else {
-      // If the button is not pressed, send a low signal
-      digitalWrite(ledPin, LOW);
-    }
-
-    // If the button has not been pressed for 20 seconds, end the calibration
-    if (millis() - lastButtonPressTime > 20000) {
-      Serial.println("Calibration complete");
-      delay(2000); // Give some time for the user to see the calibration results
-      break; // Exit the loop
-    }
-    Serial.flush();
-    while(Serial.read()>=0){}
- 
 }
 
 void loop() {

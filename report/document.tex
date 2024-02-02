@@ -6,8 +6,11 @@
 \usepackage{caption}
 \usepackage{listings,lstautogobble}
 \usepackage{xcolor}
-\usepackage[toc,page]{appendix}
+% \usepackage[toc,page]{appendix}
 \usepackage{pdfpages}
+\usepackage{rotating}
+\usepackage{pdflscape}
+\usepackage[titletoc,title]{appendix}
 
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
@@ -27,6 +30,10 @@
 \newcommand{\appendixCodeRef}
 {
 Appendix \ref{appendix:code}
+}
+\newcommand{\appendixCodeRefArduino}
+{
+Appendix \ref{appendix:codeArduino}
 }
 % \captionsetup{font=small, labelfont=bf}
 \captionsetup{justification=justified,font=small, labelfont=bf}
@@ -122,14 +129,13 @@ Appendix \ref{appendix:code}
   The purpose of this project was to build a device capable of transmitting text using light. It should provide a Physical Layer for higher level arbitrary protocols.
   Such a device could be used in a variety of applications, such as remote control of any device that has a serial port.
   Any encoding could be used. Some of them could involve checksums and retransmission. Our device will however send a message in one direction, so even if the error is caught,
-  there is no means to request a retransmission. 
-
+  there is no means to request a retransmission.
   Having in mind this assumption, we decided to use a morse code for encoding the information.
   This report elucidates a project that employs Morse code for intercommunication between two Printed Circuit Board (PCB) assemblies. The communication is facilitated by a light-emitting 
   diode (LED) transmitter and an LED receiver. The messages, originating from a computer terminal, are transmuted into Morse code, transmitted, received, and then demodulated back into alphanumeric characters for display.
 
   This report is a technical documentation of the project. It describes the initial assumptions, selected solutions and final result.
-  It was developed during Optoelectronics course at Wrocław University of Science and Technology under supervision of dr. Daruisz Wysoczański.
+  \newpage
 
 	
 	\section{Theoretical Introduction}
@@ -154,14 +160,14 @@ Appendix \ref{appendix:code}
     \captionof{figure}{Photodiode} 
   \end{multicols}
   
-  \newpage
+  
   \subsection{Receiver}
   The crucial element of the setup is the sensing element measuring the light sent by transmitter.
   It should be chosen in such a way to maximise the useful signal and minimise the noise.
   A most common part used to measure light intensity in a hobbyist projects is a fotoresistor. Such element changes its resistance with the change of light conditions. 
   It can't be used in our device since it would be too prone to the interferences, as it has a wide sensing specturm.
   Since we decided to use a standard infrared diode, we chose to use a phototransistor made for the same light 
-	
+\newpage	
 	\section{Assumptions}
 	\subsection{Functional Assumptions}
 	% What it does
@@ -173,17 +179,19 @@ Appendix \ref{appendix:code}
 
   The receiver should listen continuously wait for any message to come. When it arrives, it should decode it into a useful form - back into a human readable text. In case a timing error happens, the user should be notified.
   Both of them should be easy to carry. Moreover they should be powered from a USB port with maximum current of 500mA.
-
-  The functional requirements can be summarized as follows:
+  
+  \vspace{20pt}
+\noindent The functional requirements can be summarized as follows:
   \begin{itemize}
-    \item Provide USB interface for sending/receiving data.
+    \item Transmit alphanumeric messages from one terminal to another using light
     \item Encode a message with morse code.
-    \item Send and receive morse code.
     \item Decode morse code into a useful form.
     \item Detect idle line or incorrect timings.
+    \item Provide USB interface for sending/receiving data.
     \item Does not need external power supply.
+    
   \end{itemize}
-  \newpage
+
 	\subsection{Design Assumptions}
 	% Method of implementing functional assumptions
   The system is implemented on the Arduino Black Pill platform, powered by STM32 microprocessors. The firmware, written in C, provides low-level control over the hardware peripherals and system resources. The design assumes a certain level of 
@@ -198,38 +206,70 @@ Appendix \ref{appendix:code}
     \item The source code should be open source.
     \item The case is 3D printed.
   \end{itemize}
+  
+    \newpage
 	\section{Description of the Hardware Part}
   This section presents how the physical device was built.
+  There are two modules: transmitter and receiver. The electronics part for both is described in separate sections.
+  Since they have the same dimensions, they both used the same case which is described at the end.
+
+  In order to make the transmission work, the transmitter and receiver need to be in correct position, turned towards
+  each other with their optical parts.
+  \vspace{2cm}
+  \image{Overview of system during the operation.}{real_diagram.png}{0.25}
+  \vspace{2cm}
+  \image{Overview of system during the operation - block diagram.}{both.png}{0.5}
+
+  \newpage
+  \subsection{Transmitter module}
+  The main componenet of the transmitter module are:
+  \begin{itemize}
+    \item BlackPill development board equipped with USB connetor, capable of communication with PC.
+    \item Sensing circuit - photodiode for 940nm wavelength.
+    \item LED indicator.
+  \end{itemize}
+
+
+
+\image{Transmitter module overview.}{transmitter_overview.png}{0.2}
+
+\noindent  Full schematic is available in Appendix \ref{appendix:circuit}.
+
+\newpage
+  \subsection{Receiver module}
+  The main componenet of the receiver module are:
+  \begin{itemize}
+    \item Arduino Nano development board equipped with USB connetor, capable of communication with PC.
+    \item Transmitting circuit - infrared LED for 940nm wavelength.
+    \item LED indicator.
+  \end{itemize}
+
+\image{Receiver module overview.}{receiver_overview.png}{0.2}
+
+\noindent  Full schematic is available in Appendix \ref{appendix:circuit}.
+  \newpage
+% The module are not the same. The receiver has much more sophisticated MCU, capable of live debugging.
+% It is not a necessity but significantly speeds up process of fixing complex algorithms, which was very useful during 
+% tests of our project. However, right now as the converting algorithm is implemented, it could be easily ported to Arduino platform that does not have debugging capabilities.
   \subsection{Case}
-  The cover part was designed in Autodesk Inventor. It's two identical boxes with 4 square cubes in which there are six-sided holes for metal nuts of size M3. 
-  These nuts are meant to mount the pcb to the case. Thanks to this, our two devices will be on the same height and we prevent any unwanted
-  movements. In each box, there are three holes - two for our transmitter/receiver diode (with separate indicator). The third one is for USB type-C cable to get 
-  power and signal from the computer. It's closed by slide-in plate. The box was printed with SLA, using 3D printer avaialbe at the robotics class.
-  \image{The case rendered in Autodesk Inventor. Most importants parts are shown.}{box.png}{0.4}
-  \subsection{Motherboard}
-  There are two versions of motherboard: one for transmitter and one for receiver.
+The cover part was designed in Autodesk Inventor. It's two identical boxes with 4 square cubes in which there are six-sided holes for metal nuts of size M3. 
+These nuts are meant to mount the pcb to the case. Thanks to this, our two devices will be on the same height and we prevent any unwanted
+movements. In each box, there are three holes - two for our transmitter/receiver diode (with separate indicator). The third one is for USB type-C cable to get 
+power and signal from the computer. It's closed by slide-in plate. The box was printed with SLA, using 3D printer avaialbe at the robotics class.
 
+\image{The case rendered in Autodesk Inventor. Most importants parts are shown.}{box.png}{0.4}
 
-\image{Transmitter motherboard.}{transmitter_overview.png}{0.3}
-\image{Receiver motherboard.}{receiver_overview.png}{0.3}
-The main componenet of each motherboard are:
-\begin{itemize}
-  \item Microcontroller with power section and USB capable of connection with PC.
-  \item Diode or photodiode for 940nm wavelength.
-  \item LED indicator.
-\end{itemize}
-The motherboards are not the same. The receiver has much more sophisticated MCU, capable of live debugging.
-It's not a necessity but significantly speeds up process of fixing complex algorithms, which was very useful during 
-tests of our project. However, right now as the converting algorithm is implemented, it could be easily ported to Arduino platform that does not have debugging capabilities.
-Full schematic is available in appendix.
+\noindent  Full technical drawing is available in Appendix \ref{appendix:drawing}.
+
 	% Block diagram + description
 	% Photo of the actual system with reference to the block diagram
 	% Mechanical part
 	% Electrical schematics diagram + description
 	% Key elements - descripion
 	% PCBs, assembly diagram
-	
-	\section{Receiver software}
+	\newpage
+  \section{Software}
+	\subsection{Receiver module}
 	% Main algorithm - diagram + description
 	% Description of key functions (code examples)
 	% Transmission protocols, key variables and parameters, etc.
@@ -243,14 +283,14 @@ Full schematic is available in appendix.
     \item Recognize errors.
   \end{enumerate}
 
-  \subsection{MCU selection}
+  \subsubsection{MCU selection}
   The selected MCU is STM32F411 that can be found onboard breakout module Blackpill. It contains USB periperial enabling us to communicate with serial emulators without a 
   dedicated USB to UART converter. It also has a builtin ADC with configurable resolution (in our case it is set to 12 bits) that runs in a continuous mod) that runs in a continuous mode.
   Additionally, it is equipped with a Floating Point Unint which significantly increases performance while performing math operations.
   The alternative for STM microcontrollers could be Arduino. It is also used for simliar projects, however it comes with much lower capabilites at the same price - there is no builtin serial to USB converter.
   Moreover, the debugging is supported only on STM, which proved crucial during implementation.
 
-  \subsection{Toolchain}
+  \subsubsection{Toolchain}
   The STM32 can be programmed using both C and C++. The ARM company provides fork of gcc for the Cortex M4 cores that are used in the Blackpill, which use C++ 17 standard.
   We have decided to use STM32CubeIDE. It is an Eclipse based IDE that comes with proper compiler and visual configurator of the peripherals and clock. 
 
@@ -261,7 +301,7 @@ Full schematic is available in appendix.
   A very useful feature of all arm microcontrollers is SysTick interrupt \cite{stm32reference}. It is called each millisecond and increments a time variable.
   It enables us to measure time easily, without setting up a dedicated timer.
 
-  \subsection{Analog to Digital Conversion}
+  \subsubsection{Analog to Digital Conversion}
   The selected microcontroller has a powerful successive approximation analog-to-digital converter onboard, capable of achieving 12 bits resolution.
   It can run in a single or continuous mode and optionally generate a DMA request to offload main CPU.
 
@@ -270,13 +310,13 @@ Full schematic is available in appendix.
   It is suitable in our case because of low timing requirements. Our algorithm should work in such a way that a human operator could see the transmission and understand it.
   The timings of the ADC converter are shown below:
   
-  \image{ADC timing diagram.}{adc_internals.png}{0.4}
+  
   By setting the SWSTART bit, we can trigger a start a conversion process. Once it finishes, the End Of Conversion (EOC) bit is set.
   This process takes usually 15 clock cycles of ADC, which in our case is a few MHz.
   Thanks to such a speed of the conversion, we are able to probe the channel with frequency well above the frequency of changes of the signal during normal
   operation. Thanks to that, the shannon-nyquist theorem is not violated in our case.
 
-  \subsection{Converting algorithm}
+  \subsubsection{Converting algorithm}
   The converting algorithm uses a preconfigured timing constraints that include times of: dash, dot, space between two signs, space between two letters, space between two words, timeout.
   \vspace{10pt}
 
@@ -288,7 +328,7 @@ Full schematic is available in appendix.
     \item Analyze the chain and present human readable form.
   \end{enumerate}
   The schematic of the algorithm is visualized on fig.\ref{fig:algo}.
-  \imageLabeled{Algorithm of the receiver.}{algorithm_receiver.png}{0.35}{algo}
+  \imageLabeled{Algorithm of the receiver.}{algorithm_receiver.png}{0.2}{algo}
   The full algorithm is available in \appendixCodeRef.
 
   At the beginning, the code performs calibration procedure. It should establish a reference value of an environmental noise.
@@ -300,8 +340,8 @@ Full schematic is available in appendix.
 
   The other possiblity is that the low state is measured to be a pause between signs, letters or words. If, it is noted as such and the code goes back to measuring high state to get the next sign.
   The listing of a full code can be found at the end of this report.
-
-  \subsection{Error detection}
+\newpage
+  \subsubsection{Error detection}
   The first method error detection is performed by comparing measured times to the expected values.
   The second method is analysis of the chain of dots and dashes. If it happens that the combination does not match any letter in the standard, a question mark is inserted.
   \begin{figure}[h]
@@ -317,23 +357,40 @@ Full schematic is available in appendix.
   \end{lstlisting}
     \caption{Code responsible for morse code decoding. Unknown sequence return question mark.}
   \end{figure}
-	
-	\section{Transmitter software}
+	\newpage
+	\subsection{Transmitter module}
+  The software on the microcontroller is responsible for following tasks:
+  \begin{enumerate}
+    \item Get data to send from the user.
+    \item Encode the data using morse code.
+    \item Transmit the data using IR LED.
+  \end{enumerate}
+  \subsubsection{MCU selection}
+  As the requirements for transmitter are much simpler than for receiver, an ATmega328 was selected. It is a cheaper MCU than STM32 
+  and can be found in popular Arduino modules. It does not have debugging capabilities but at least have a support from Arduino framework,
+  enabling fasting prototyping.
+
+
+  \subsubsection{Algorithm}
   The part of software that sends the data is much simpler than the software that receives the data.
   The tasks of the software is to get the data that user wants to send in a form of text, convert the text into a morsed code 
   and generate an appropriate light using connected IR diode. 
   The algorithm itself is much simpler than in the case of receiver. The code waits for data available in serial port buffer.
   When its available, it gets converted by using each character in the buffer as a key to a lookup table.
   The decoded code is immediately transmitted using predefined timing constraints.
+  Full listing is available in \appendixCodeRefArduino.
 
+  \image{Transmitter module algorithm.}{transmitter_algorithm.png}{0.4}
+
+\newpage
 	\section{Start-up, Calibration}
 	% First start-up, calibration
-  \subsection{Receiver}
+  \subsection{Receiver module}
   During the start-up, the calibration procedure is needed. It is impossible to know in what ligh conditions the device will operate, so the reference value of light intensity is not hardcoded.
   Instead, a short procedure is executed at each startup. It does not take more than 3 seconds which is usually negligible since the operator won't even have time to open serial connection in this time.
-  \subsection{Transmitter}
+  \subsection{Transmitter module}
   The calibration of transmitter is not needed. It does not sample any data thus the reference value is not needed.
-	
+	\newpage
 	\section{Test Measurements}
   The measurements were conducted to understand how lightning conditions constrain operation of the device. The most important part of the setup was 
   an oscilloscope, measuring transmitter output and receiver input at the same time. This allowed us to directly compare the signal sent and received.
@@ -385,7 +442,7 @@ Ensure that the receiver is ready (e.g., an LED indicating readiness to receive 
 
 \noindent\textbf{Step 2:} Entering Messages
 \begin{enumerate}
-  \item 1.Transmitter (Sender):
+  \item Transmitter (Sender):
 
   Enter the message in a natural way using a keyboard or another input device.
 
@@ -440,31 +497,58 @@ Finish using the device by turning off the receiver.
 
   The biggest challenge was definitely implementing the receiving algorithm and calibration. Other than that, we have learned how to make a device 
   with a full documentation from scratch and how to work as a team.
+
+  In the future, the project could be extended by introducing calibration of the transmitter/receiver pair
+  to support custom timings. Also, an algorithm of receiver could be explored to provide
+  ability to decode a morse code without predefined timings, judging purely by relative length of pulses.
 	
+  \newpage
 	\begin{thebibliography}{9}
 		% Bibliography
     \bibitem{stm32reference} STM32F412 Reference Manual - RM0402 (2020), \emph{ST Microelectronics}
+    \bibitem{stm32reference} Arduino Core Refernce at \url{https://www.arduino.cc/reference/en/} 
 	\end{thebibliography}
 	
 
-  \section*{Appendices}
-	\appendix
+  % \section*{Appendices}
+
+  \begin{appendices}
+  \begin{landscape}
 	\section{Technical drawing of case}
-  For full technical drawing of the case, see next pages.
-	\section{Electrical schematic}
-  For full electrical schematics, see next pages.
-  \includepdf[scale=1,angle=90,pages={1-2}]{schematics.pdf}
+    \includegraphics[scale=0.55]{CASE.pdf}
+    \thispagestyle{empty}
+    \label{appendix:drawing}
+  \end{landscape}
+  \begin{landscape}
+
+    \section{Electrical schematic}
+    \label{appendix:circuit}
+    \includegraphics[scale=0.8,page=1]{schematics.pdf}
+    \thispagestyle{empty}
+    \newpage
+  % \includepdf[scale=1,angle=90,pages={1-2}]{schematics.pdf}
+    % \end{landscape}
+
+  % \begin{landscape}
+
+    \includegraphics[scale=0.85,page=2]{schematics.pdf}
+    \thispagestyle{empty}
+  % \includepdf[scale=1,angle=90,pages={1-2}]{schematics.pdf}
+  \end{landscape}
+
 	\section{Full code listing}
-  \subsection{STM32}
+  \subsection{Receiver module}
   \label{appendix:code}
   \lstinputlisting[style=CStyle,lastline=284]{../Core/Src/main.c}
   \newpage
-  \subsection{Arduino}
+    \subsection{Transmitter module}
+  \label{appendix:codeArduino}
   \lstinputlisting[style=CStyle,lastline=284]{../arduino.ino}
   % \lstinputlisting[style=CStyle,lastline=284]{../}
 	% Dimensioned patterns of PCBs
 	% Full listing
 	% Key fragments of catalog notes
 	% Custom drawings
+  \end{appendices}
 	
 \end{document}
