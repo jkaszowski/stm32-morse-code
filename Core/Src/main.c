@@ -4,6 +4,7 @@
 //   Module:  Receiver
 //   Author:  Jakub Kaszowski
 //   Date:    09.01.2024
+//   MCU:     BlackPill (STM32)
 // ############################################################################
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
@@ -116,8 +117,9 @@ char getAscii(char *str) {
   return ' ';
 }
 
-char human_readable[128]; // place to store human readable text after the conversion
-char *ptr; // temporary value for conversion
+char human_readable[128]; // place to store human readable text after the
+                          // conversion
+char *ptr;                // temporary value for conversion
 
 void convertWord(char *word) {
   char korektor[] = " ";
@@ -178,8 +180,10 @@ const int DASH_DURATION_LOW = (DASH_DURATION - ERR_PAUSE);
 const int DASH_DURATION_HIGH = (DASH_DURATION + ERR_PAUSE);
 const int MIDWORDPAUSE_DURATION_LOW = (MIDWORDPAUSE_DURATION - ERR_PAUSE);
 const int MIDWORDPAUSE_DURATION_HIGH = (MIDWORDPAUSE_DURATION + ERR_PAUSE);
-const int BETWEENWORDPAUSE_DURATION_LOW = (BETWEENWORDPAUSE_DURATION - ERR_PAUSE);
-const int BETWEENWORDPAUSE_DURATION_HIGH = (BETWEENWORDPAUSE_DURATION + ERR_PAUSE);
+const int BETWEENWORDPAUSE_DURATION_LOW =
+    (BETWEENWORDPAUSE_DURATION - ERR_PAUSE);
+const int BETWEENWORDPAUSE_DURATION_HIGH =
+    (BETWEENWORDPAUSE_DURATION + ERR_PAUSE);
 
 #define DASH '-'
 #define DOT '.'
@@ -225,7 +229,8 @@ int main(void) {
         state = MEASURING_HIGH;
         stack_ptr = stack;
         log("Transition: NORMAL -> MEASURING_HIGH");
-      }      break;
+      }
+      break;
     case MEASURING_HIGH:
       if (getADCvalue() < reference_value + threshhold) {
         duration = HAL_GetTick() - last_timestamp;

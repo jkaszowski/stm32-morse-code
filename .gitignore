@@ -9,3 +9,4 @@ Release/*
 report/document.*
 !report/document.tex
 !report/document.pdf
+report/img/*.bkp
